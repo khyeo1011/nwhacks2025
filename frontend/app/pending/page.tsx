@@ -2,16 +2,42 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { getPendingQuests } from "@/utils/api"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 const pendingQuests = getPendingQuests("testUserId")
 
 export default function PendingPage() {
   const router = useRouter()
+  const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleQuestClick = (questId: string) => {
-    router.push(`/pending/${questId}`)
+    setSelectedQuestId(questId)
+    setIsDialogOpen(true)
+  }
+
+  const handleConfirm = () => {
+    if (selectedQuestId) {
+      router.push(`/pending/${selectedQuestId}`)
+    }
+    setIsDialogOpen(false)
+  }
+
+  const handleCancel = () => {
+    setIsDialogOpen(false)
+    setSelectedQuestId(null)
   }
 
   return (
@@ -49,6 +75,21 @@ export default function PendingPage() {
             </div>
           </CardContent>
         </Card>
+
+        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Start Quest?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to start this quest? Once started, leaving the page will forfeit the quest!
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirm}>Start Quest</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </main>
   )
