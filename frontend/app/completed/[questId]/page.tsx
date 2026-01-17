@@ -10,15 +10,15 @@ export default function QuestDetailsPage({ params }: { params: Promise<{ questId
   const router = useRouter()
   const { questId } = use(params)
   
-  const quest = getCompletedQuests("testUserId").find(q => q.questId === questId)
+  const quest = getCompletedQuests("testUserId").find(q => q.questId === Number(questId))
 
   if (!quest) {
     return (
       <main className="min-h-screen bg-background px-4 py-6">
         <div className="mx-auto max-w-md">
           <h1 className="mb-6 text-2xl font-bold text-foreground">Quest Not Found</h1>
-          <Button onClick={() => router.push("/pending")}>
-            Back to Pending Quests
+          <Button onClick={() => router.push("/completed")}>
+            Back to Completed Quests
           </Button>
         </div> 
       </main>
@@ -31,7 +31,7 @@ export default function QuestDetailsPage({ params }: { params: Promise<{ questId
         <Button 
           variant="ghost" 
           className="mb-4"
-          onClick={() => router.push("/pending")}
+          onClick={() => router.push("/completed")}
         >
           ← Back
         </Button>

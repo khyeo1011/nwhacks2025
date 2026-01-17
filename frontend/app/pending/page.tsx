@@ -20,10 +20,10 @@ const pendingQuests = getPendingQuests("testUserId")
 
 export default function PendingPage() {
   const router = useRouter()
-  const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null)
+  const [selectedQuestId, setSelectedQuestId] = useState<number | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const handleQuestClick = (questId: string) => {
+  const handleQuestClick = (questId: number) => {
     setSelectedQuestId(questId)
     setIsDialogOpen(true)
   }

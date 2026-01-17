@@ -12,7 +12,7 @@ export default function QuestDetailsPage({ params }: { params: Promise<{ questId
   const { questId } = use(params)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   
-  const quest = getPendingQuests("testUserId").find(q => q.questId === questId)
+  const quest = getPendingQuests("testUserId").find(q => q.questId === Number(questId))
 
   const handleImageCapture = (imageData: string) => {
     setCapturedImage(imageData)

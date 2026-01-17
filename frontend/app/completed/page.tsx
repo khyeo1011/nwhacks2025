@@ -10,7 +10,7 @@ const completedQuests = getCompletedQuests("testUserId")
 export default function CompletedPage() {
   const router = useRouter()
 
-  const handleQuestClick = (questId: string) => {
+  const handleQuestClick = (questId: number) => {
     router.push(`/completed/${questId}`)
   }
 

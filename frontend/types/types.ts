@@ -1,12 +1,12 @@
 export interface Quest {
-    questId: string
+    questId: number
     prompt: string
     hostId: string
     date: number
 }
 
 export interface Participant {
-    questId: string
+    questId: number
     userId: string
     score: number
     time: number
@@ -18,15 +18,8 @@ export interface User {
     password: string
 }
 
-export interface Participant {
-    userId: string
-    score: number
-    time: number
-    photo: any
-}
-
-export interface QuestDetail {
-    questId: string
+export interface QuestDetails {
+    questId: number
     prompt: string
     hostId: string
     date: number
