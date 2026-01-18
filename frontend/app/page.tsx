@@ -3,10 +3,32 @@
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
+import { useState, useEffect } from "react"
+import { getPoints } from "@/utils/api"
 
 export default function Page() {
   const router = useRouter()
   const { userId, logout } = useAuth()
+  const [points, setPoints] = useState(0)
+
+  useEffect(() => {
+    if (userId) {
+      const fetchPoints = async () => {
+        try {
+          const userPoints = await getPoints(userId)
+          setPoints(userPoints)
+        } catch (error) {
+          console.error("Failed to fetch points:", error)
+          setPoints(-1)
+        }
+      }
+
+      fetchPoints() // Initial fetch
+      const interval = setInterval(fetchPoints, 10000) // Poll every 10 seconds
+
+      return () => clearInterval(interval) // Cleanup on unmount
+    }
+  }, [userId])
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -23,9 +45,14 @@ export default function Page() {
         </div>
         
         {userId && (
-          <p className="text-sm text-muted-foreground text-center">
-            Welcome, {userId}!
-          </p>
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">
+              Welcome, {userId}!
+            </p>
+            <p className="text-2xl font-bold text-primary">
+              {points} Points
+            </p>
+          </div>
         )}
         
         <div className="flex flex-col gap-3">

@@ -126,3 +126,23 @@ export async function getUser(userId: string): Promise<boolean> {
         return false
     }
 }
+
+export async function getPoints(userId: string): Promise<number> {
+    const response = await fetch(url + `/api/get-points?userId=${userId}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+        },
+    });
+
+    if (!response.ok) {
+        if (response.status === 404) {
+            return -1; // User not found, so points are 0
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.points;
+}
