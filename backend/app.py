@@ -246,21 +246,21 @@ def complete_quest():
     data = request.get_json()
     quest_id = data.get('questId')
     user_id = data.get('userId')
-    photo = data.get('image')
+    image = data.get('image')
     time = data.get('time')
     
     quest = db_helper.get_quest_details(quest_id)
     if not quest:
         return jsonify({'message': 'Quest not found'}), 404
 
-    score = get_clip_score(photo, quest['prompt'])
+    score = get_clip_score(image, quest['prompt'])
     update_data = {
         'score': score,
         'timetaken': time,
     }
     
     db_helper.update_participants(quest_id, update_data, user_id)
-    write_image(photo, quest_id, user_id)
+    write_image(image, quest_id, user_id)
     _check_and_distribute_points(quest_id)
     
     return jsonify({
@@ -327,6 +327,29 @@ def get_quest_details(quest_id):
     }
     
     return jsonify(response_data), 200
+
+@app.route('/api/get-image', methods=['GET'])
+def get_image():
+    quest_id = request.args.get('questId')
+    user_id = request.args.get('userId')
+ 
+    file_path = "./testfile"
+    
+    try:
+        with open(file_path, 'r') as image_file:
+            image_data = image_file.read().strip()
+        
+        return jsonify({
+            'image': image_data
+        }), 200
+    except FileNotFoundError:
+        return jsonify({
+            'message': 'Image not found'
+        }), 404
+    except Exception as e:
+        return jsonify({
+            'message': f'Error reading image: {str(e)}'
+        }), 500
 
 @app.route('/api/get-points', methods=['GET'])
 def get_points():
