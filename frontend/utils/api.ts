@@ -13,8 +13,15 @@ export async function register(userId: string, password: string) {
     return response.json()
 }
 
-function login(useId: string, password: string) {
-    return
+export async function login(userId: string, password: string) {
+    const response = await fetch(url + "/api/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: userId, password }),
+    })
+    return response.json()
 }
 
 export function getPendingQuests(userId: string): Quest[] {
