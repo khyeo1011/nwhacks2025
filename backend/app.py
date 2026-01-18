@@ -31,6 +31,11 @@ def register():
         'userid': user_id,
         'password': password
     }
+
+    if db_helper.get_user(user_id):
+        return jsonify({
+            'message': 'User already exists'
+        }), 400
     
     result = db_helper.insert_user(user_data)
     
