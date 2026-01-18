@@ -2,20 +2,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import random
 import os
-import base64
 from dotenv import load_dotenv
 from src.DBHelper import DBHelper
-
+from utils import get_clip_score
 load_dotenv()
-
-def serialize_image_to_bytea(image_data):
-    if image_data.startswith('data:image'):
-        image_data = image_data.split(',')[1]
-    
-    binary_data = base64.b64decode(image_data)
-    postgres_hex = "\\x" + binary_data.hex()
-    
-    return postgres_hex
 
 app = Flask(__name__)
 CORS(app)
@@ -34,7 +24,7 @@ PROMPTS = [
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
-    user_id = data.get('userID')
+    user_id = data.get('userId')
     password = data.get('password')
 
     if not user_id or not password:
@@ -51,13 +41,13 @@ def register():
     
     return jsonify({
         'message': 'User registered successfully',
-        'user_id': result.get('userid')
+        'userId': result.get('userid')
     }), 201
 
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
-    user_id = data.get('userID')
+    user_id = data.get('userId')
     password = data.get('password')
 
     if not user_id or not password:
@@ -83,11 +73,11 @@ def login():
 
 @app.route('/api/pending-quests', methods=['GET'])
 def get_pending_quests():
-    user_id = request.args.get('userID')
+    user_id = request.args.get('userId')
 
     if not user_id:
         return jsonify({
-            'message': 'userID is required'
+            'message': 'userId is required'
         }), 400
 
     participant_rows = db_helper.get_quests_pending(user_id)
@@ -102,20 +92,20 @@ def get_pending_quests():
         quest = db_helper.get_quest(quest_id)
         if quest:
             formatted_quests.append({
-                'quest_id': quest.get('questid'),
+                'questId': quest.get('questid'),
                 'prompt': quest.get('prompt'),
-                'host_id': quest.get('hostid')
+                'hostId': quest.get('hostid')
             })
     
     return jsonify({'quests': formatted_quests}), 200
 
 @app.route('/api/completed-quests', methods=['GET'])
 def get_completed_quests():
-    user_id = request.args.get('userID')
+    user_id = request.args.get('userId')
 
     if not user_id:
         return jsonify({
-            'message': 'userID is required'
+            'message': 'userId is required'
         }), 400
 
     participant_rows = db_helper.get_quests_completed(user_id)
@@ -130,9 +120,9 @@ def get_completed_quests():
         quest = db_helper.get_quest(quest_id)
         if quest:
             formatted_quests.append({
-                'quest_id': quest.get('questid'),
+                'questId': quest.get('questid'),
                 'prompt': quest.get('prompt'),
-                'host_id': quest.get('hostid')
+                'hostId': quest.get('hostid')
             })
     
     return jsonify({'quests': formatted_quests}), 200
@@ -141,8 +131,8 @@ def get_completed_quests():
 def create_quest():
     data = request.get_json()
     prompt = data.get('prompt')
-    host_id = data.get('host_id')
-    user_ids = data.get('user_ids')
+    host_id = data.get('hostId')
+    user_ids = data.get('userIds')
     image = data.get('image')
     time = data.get('time')
     
@@ -159,25 +149,31 @@ def create_quest():
     
     participants_data = []
 
-    # TODO: Use CLIP for score (confidence score)
-
-    serialized_image = serialize_image_to_bytea(image)
+    score = get_clip_score(image, prompt)
     
     for user_id in user_ids:
         participant = {
             'questid': quest_id,
             'userid': user_id,
-            'score': None, # TODO
-            'timetaken': time if user_id == host_id else None,
-            'photo': serialized_image if user_id == host_id else None
+            'score': None,
+            'timetaken': None,
+            'photo': None
         }
         participants_data.append(participant)
     
+    host = {
+        'questid': quest_id,
+        'userid': host_id,
+        'score': score,
+        'timetaken': time,
+        'photo': image
+    }
+    participants_data.append(host)
     db_helper.insert_participants(participants_data)
     
     return jsonify({
         'message': 'Quest created successfully',
-        'quest_id': quest_id
+        'questId': quest_id
     }), 201
 
 @app.route('/api/get-prompt', methods=['GET'])
@@ -192,29 +188,86 @@ def get_prompt():
 @app.route('/api/complete-quest', methods=['POST'])
 def complete_quest():
     data = request.get_json()
-    quest_id = data.get('quest_id')
-    user_id = data.get('user_id')
-    image = data.get('image')
+    quest_id = data.get('questId')
+    user_id = data.get('userId')
+    photo = data.get('photo')
     time = data.get('time')
-
-    # TODO: Call DBHelper to update participant
+    
+    quest = get_quest_details(quest_id)
+    score = get_clip_score(photo, quest['prompt']),
+    update_data = {
+        'score': score,
+        'timetaken': time,
+        'photo': photo
+    }
+    
+    db_helper.update_participants(quest_id, update_data, user_id)
     
     return jsonify({
         'message': 'Quest completed successfully',
-        'score': None
+        'score': score
     }), 200
 
 @app.route('/api/quest-details/<int:quest_id>', methods=['GET'])
 def get_quest_details(quest_id):
-    # TODO: Call DBHelper to get quest details
+    # 1. Call DBHelper (Convert int to str because DBHelper expects str)
+    quest_data = db_helper.get_quest_details(str(quest_id))
     
-    return jsonify({
-        'quest_id': quest_id,
-        'prompt': None,
-        'host_id': None,
-        'date': None,
-        'participants': []
-    }), 200
+    # 2. Handle case where quest is not found
+    if not quest_data:
+        return jsonify({"error": "Quest not found"}), 404
+
+    # 3. Map Participants from DB format to Frontend format
+    #    DB: timetaken -> Frontend: time
+    #    DB: userid    -> Frontend: userId
+    #    DB: questid   -> Frontend: questId
+    mapped_participants = []
+    
+    # We need to calculate the winner. 
+    # Logic: Highest score wins. If tie, lowest time wins.
+    winner_id = None
+    best_score = -1
+    best_time = float('inf')
+
+    raw_participants = quest_data.get('participants', [])
+
+    for p in raw_participants:
+        # Create the participant object for frontend
+        mapped_p = {
+            'questId': p.get('questid'),
+            'userId': p.get('userid'),
+            'score': p.get('score'),
+            'time': p.get('timetaken'), # Mapping timetaken -> time
+            'photo': p.get('photo')
+        }
+        mapped_participants.append(mapped_p)
+
+        # Logic to determine winner
+        # Skip if score is None (participant hasn't finished)
+        p_score = p.get('score')
+        p_time = p.get('timetaken')
+        
+        if p_score is not None:
+            # Check for higher score OR (equal score AND faster time)
+            if p_score > best_score:
+                best_score = p_score
+                best_time = p_time
+                winner_id = p.get('userid')
+            elif p_score == best_score and p_time < best_time:
+                best_time = p_time
+                winner_id = p.get('userid')
+
+    # 4. Construct final object matching QuestDetails interface
+    response_data = {
+        'questId': quest_data.get('questid'),
+        'prompt': quest_data.get('prompt'),
+        'hostId': quest_data.get('hostid'),
+        'date': quest_data.get('datecreated'), # Mapping datecreated -> date
+        'winner': winner_id,                   # Calculated field
+        'participants': mapped_participants
+    }
+    
+    return jsonify(response_data), 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
