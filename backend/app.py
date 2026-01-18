@@ -140,7 +140,8 @@ def get_pending_quests():
             formatted_quests.append({
                 'questId': quest.get('questid'),
                 'prompt': quest.get('prompt'),
-                'hostId': quest.get('hostid')
+                'hostId': quest.get('hostid'),
+                'date': quest.get('datecreated')
             })
     
     return jsonify({'quests': formatted_quests}), 200
@@ -168,7 +169,8 @@ def get_completed_quests():
             formatted_quests.append({
                 'questId': quest.get('questid'),
                 'prompt': quest.get('prompt'),
-                'hostId': quest.get('hostid')
+                'hostId': quest.get('hostid'),
+                'date': quest.get('datecreated')
             })
     
     return jsonify({'quests': formatted_quests}), 200
