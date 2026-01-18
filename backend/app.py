@@ -4,7 +4,7 @@ import random
 import os
 from dotenv import load_dotenv
 from src.DBHelper import DBHelper
-from utils import get_clip_score
+from utils import *
 from prompts import PROMPTS
 load_dotenv()
 
@@ -183,7 +183,7 @@ def create_quest():
         prompt = data.get('prompt')
         host_id = data.get('hostId')
         user_ids = data.get('userIds')
-        image = data.get('photo')  # Changed from 'image' to 'photo' to match frontend
+        image = data.get('image') 
         time = data.get('time')
         
         import time as time_module
@@ -206,8 +206,7 @@ def create_quest():
                 'questid': quest_id,
                 'userid': user_id,
                 'score': None,
-                'timetaken': None,
-                'photo': None
+                'timetaken': None
             }
             participants_data.append(participant)
         
@@ -215,11 +214,11 @@ def create_quest():
             'questid': quest_id,
             'userid': host_id,
             'score': score,
-            'timetaken': time,
-            'photo': image
+            'timetaken': time
         }
         participants_data.append(host)
         db_helper.insert_participants(participants_data)
+        write_image(image, quest_id, host_id)
         
         return jsonify({
             'message': 'Quest created successfully',
@@ -247,22 +246,21 @@ def complete_quest():
     data = request.get_json()
     quest_id = data.get('questId')
     user_id = data.get('userId')
-    photo = data.get('photo')
+    image = data.get('image')
     time = data.get('time')
     
     quest = db_helper.get_quest_details(quest_id)
     if not quest:
         return jsonify({'message': 'Quest not found'}), 404
 
-    score = get_clip_score(photo, quest['prompt'])
+    score = get_clip_score(image, quest['prompt'])
     update_data = {
         'score': score,
         'timetaken': time,
-        'photo': photo
     }
     
     db_helper.update_participants(quest_id, update_data, user_id)
-    
+    write_image(image, quest_id, user_id)
     _check_and_distribute_points(quest_id)
     
     return jsonify({
@@ -299,7 +297,7 @@ def get_quest_details(quest_id):
             'questId': p.get('questid'),
             'userId': p.get('userid'),
             'score': p.get('score'),
-            'time': p.get('timetaken'), # Mapping timetaken -> time
+            'time': p.get('timetaken')
         }
         mapped_participants.append(mapped_p)
 
@@ -329,6 +327,26 @@ def get_quest_details(quest_id):
     }
     
     return jsonify(response_data), 200
+
+@app.route('/api/get-image', methods=['GET'])
+def get_image():
+    quest_id = request.args.get('questId')
+    user_id = request.args.get('userId')
+
+    try:
+        image_data = read_image(quest_id, user_id)
+        
+        return jsonify({
+            'image': image_data
+        }), 200
+    except FileNotFoundError:
+        return jsonify({
+            'message': 'Image not found'
+        }), 404
+    except Exception as e:
+        return jsonify({
+            'message': f'Error reading image: {str(e)}'
+        }), 500
 
 @app.route('/api/get-points', methods=['GET'])
 def get_points():
