@@ -26,19 +26,22 @@ export default function PendingPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const auth = useAuth();
   const [pendingQuests, setPendingQuests] = useState<Quest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
     if (auth.isAuthenticated && auth.userId) {
+      setIsLoading(true);
       const quests = await getPendingQuests(auth.userId);
       console.log("Pending page: " );
       console.log(quests)
       setPendingQuests(quests);
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
     fetchData()
-  }, []);
+  }, [auth.isAuthenticated, auth.userId]);
 
   const handleQuestClick = (questId: number) => {
     setSelectedQuestId(questId)
@@ -75,19 +78,24 @@ export default function PendingPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-3">
-              {pendingQuests.map((quest) => (
-                <Button
-                  key={quest.questId}
-                  variant="outline"
-                  className="w-full justify-start text-left bg-transparent"
-                  onClick={() => handleQuestClick(quest.questId)}
-                >
-                  {quest.hostId}
-                </Button>
-              ))}
-
-              {pendingQuests.length === 0 && (
-                <p className="text-center text-muted-foreground">No pending quests available</p>
+              {isLoading ? (
+                <p className="text-center text-muted-foreground">Loading...</p>
+              ) : (
+                <>
+                  {pendingQuests.map((quest) => (
+                    <Button
+                      key={quest.questId}
+                      variant="outline"
+                      className="w-full justify-start text-left bg-transparent"
+                      onClick={() => handleQuestClick(quest.questId)}
+                    >
+                      {quest.hostId}
+                    </Button>
+                  ))}
+                  {pendingQuests.length === 0 && (
+                    <p className="text-center text-muted-foreground">No pending quests available</p>
+                  )}
+                </>
               )}
             </div>
           </CardContent>
