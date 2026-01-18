@@ -332,8 +332,10 @@ def get_quest_details(quest_id):
 def get_image():
     quest_id = request.args.get('questId')
     user_id = request.args.get('userId')
- 
-    file_path = "./testfile"
+
+    output_dir = os.getenv('IMAGE_DIR')
+    
+    file_path = os.path.join(output_dir, f"{quest_id}_{user_id}")
     
     try:
         with open(file_path, 'r') as image_file:
