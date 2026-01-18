@@ -30,12 +30,11 @@ export default function PendingPage() {
   const fetchData = async () => {
     if (auth.isAuthenticated && auth.userId) {
       const quests = await getPendingQuests(auth.userId);
-      console.log(quests);
-      setPendingQuests(pendingQuests);
+      console.log("Pending page: " );
+      console.log(quests)
+      setPendingQuests(quests);
     }
   };
-
-
 
   useEffect(() => {
     fetchData()

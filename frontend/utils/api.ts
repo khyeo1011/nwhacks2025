@@ -27,10 +27,12 @@ export async function login(userId: string, password: string) {
 }
 
 export async function getPendingQuests(userId: string) : Promise<Quest[]> {
-    const response = await fetch(url + `/api/pending-quests?userId=${userId}`)
-    
-    console.log(response.json());
-    return [];
+    const response = await fetch(url + `/api/pending-quests?userId=${userId}`,{
+        method: "GET"
+        })
+    const data = await response.json();
+
+    return data.quests;
 }
 
 export function getCompletedQuests(userId: string): Quest[] {
