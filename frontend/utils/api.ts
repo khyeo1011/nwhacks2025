@@ -54,8 +54,14 @@ function createQuest(prompt: string, hostId: string, userIds: string[], image: a
     return
 }
 
-function getPrompt() {
-    return
+export async function getPrompt() {
+    const response = await fetch(url + "/api/get-prompt", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    return response.json()
 }
 
 function completeQuest(questId: string, userId: string, image: any, time: number) {
