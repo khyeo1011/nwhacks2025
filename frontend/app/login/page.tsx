@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { login } from "@/utils/api"
-import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext"
 import { useState } from "react"
 import { AlertCircle } from "lucide-react"
+import Link from "next/link"
 
 export default function LoginPage() {
-    const router = useRouter()
+    const { login: authLogin } = useAuth()
     const [userId, setUserId] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState<string | null>(null)
@@ -31,7 +32,7 @@ export default function LoginPage() {
                 setError(response.message || "Login failed. Please try again.")
             } else {
                 // Handle successful login
-                router.push("/")
+                authLogin(userId)
             }
         } catch (error) {
             console.error("Login failed:", error)
@@ -42,14 +43,6 @@ export default function LoginPage() {
     return (
         <main className="min-h-screen bg-background flex items-center justify-center px-4">
             <div className="mx-auto max-w-md w-full">
-                <Button 
-                    variant="ghost" 
-                    className="mb-4"
-                    onClick={() => router.push("/")}
-                >
-                    ← Back
-                </Button>
-
                 <Card>
                     <CardHeader>
                         <CardTitle>Login</CardTitle>
@@ -88,6 +81,13 @@ export default function LoginPage() {
                             >
                                 Login
                             </Button>
+                            
+                            <div className="text-center text-sm text-muted-foreground">
+                                Don't have an account?{" "}
+                                <Link href="/register" className="text-primary hover:underline">
+                                    Register
+                                </Link>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
