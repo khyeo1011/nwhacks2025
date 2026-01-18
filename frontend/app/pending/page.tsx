@@ -92,7 +92,7 @@ export default function PendingPage() {
                       <div className="flex justify-between items-center w-full">
                         <span>Invited By: {quest.hostId}</span>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(quest.date).toLocaleDateString('en-US', { 
+                          {new Date(quest.date * 1000).toLocaleDateString('en-US', { 
                             year: 'numeric', 
                             month: 'short', 
                             day: 'numeric' 
