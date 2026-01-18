@@ -14,7 +14,9 @@ export default function Page() {
   useEffect(() => {
     if (points > prevPointsRef.current) {
       const audio = new Audio('/increase.mp3');
-      audio.play();
+      audio.play().catch(error => {
+        console.log('Audio autoplay prevented:', error);
+      });
     }
     prevPointsRef.current = points;
   }, [points]);
