@@ -61,6 +61,11 @@ export async function getPrompt() {
             "Content-Type": "application/json",
         },
     })
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
     return response.json()
 }
 
